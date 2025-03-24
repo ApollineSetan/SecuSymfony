@@ -10,6 +10,7 @@ use App\Entity\Account;
 use App\Repository\AccountRepository;
 use App\Form\RegisterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class RegisterController extends AbstractController
@@ -17,41 +18,38 @@ final class RegisterController extends AbstractController
     public function __construct(
         private readonly AccountRepository $accountRepository,
         private readonly EntityManagerInterface $em,
-        private readonly ValidatorInterface $validator
+        private readonly UserPasswordHasherInterface $hasher
     ) {}
 
     #[Route('/register', name: 'app_register_addaccount')]
-    public function addAccount(Request $request, ValidatorInterface $validator): Response
+    public function addAccount(Request $request): Response
     {
         $msg = "";
         $type = "";
-        // Créer un objet Account
+        //Créer un objet Account
         $account = new Account();
-        // Créer un objet RegisterType (notre formulaire)
+        //Créer un objet RegisterType (formulaire)
         $form = $this->createForm(RegisterType::class, $account);
-        // Récupérer le résultat de la requête
+        //Récupérer le resultat de la requête
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $errors = $validator->validate($account);
-            // Teste si l'entité est valide (validation)
-            if (count($errors) > 0){
-                $msg = $errors[0]->getMessage();
-                $type = "warning";
-            } else {
-            // Teste si le compte n'existe pas
-            if (!$this->accountRepository->findOneBy(["email" => $account->getEmail()])) {
+        if($form->isSubmitted() && $form->isValid()) {
+            //Test si le compte n'existe pas
+            if(!$this->accountRepository->findOneBy(["email" => $account->getEmail()])) {
+                $account->setRoles(["ROLE_USER"]);
                 $this->em->persist($account);
                 $this->em->flush();
-                $msg = "Le message a été ajouté en BDD.";
+                $msg = "Le compte a été ajouté en BDD";
                 $type = "success";
-            } else {
-                $msg = "Les informations email et/ou mot de passe existe déjà.";
+            }
+            else {
+                $msg = "Les informations email et ou password existe déja";
                 $type = "danger";
             }
+
+            $this->addFlash($type,$msg);
         }
-            $this->addFlash($type, $msg);
-        }
+
         return $this->render('register/addaccount.html.twig', [
             'form' => $form
         ]);
