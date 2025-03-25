@@ -60,10 +60,14 @@ final class RegisterController extends AbstractController
     public function activate(int $id): Response{
         
         $account = $this->accountRepository->find($id);
+
+        // On vérifie si le compte est déjà activé
         if($account->getStatus() === true){
             $this->addFlash('info', 'Le compte est déjà activé');
             return $this->redirectToRoute('app_register_addaccount');
         }
+
+        // On modifie la valeur du status à true
         $account->setStatus(true);
         $this->em->flush();
         $this->addFlash('success', 'Le compte a été activé');
