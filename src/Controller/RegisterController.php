@@ -36,6 +36,7 @@ final class RegisterController extends AbstractController
         if($form->isSubmitted() && $form->isValid()) {
             //Test si le compte n'existe pas
             if(!$this->accountRepository->findOneBy(["email" => $account->getEmail()])) {
+                $account->setStatus(false);
                 $account->setRoles(["ROLE_USER"]);
                 $this->em->persist($account);
                 $this->em->flush();
@@ -53,5 +54,19 @@ final class RegisterController extends AbstractController
         return $this->render('register/addaccount.html.twig', [
             'form' => $form
         ]);
+    }
+
+    #[Route('/activte/{id}', name: 'app_register_activate')]
+    public function activate(int $id): Response{
+        
+        $account = $this->accountRepository->find($id);
+        if($account->getStatus() === true){
+            $this->addFlash('info', 'Le compte est déjà activé');
+            return $this->redirectToRoute('app_register_addaccount');
+        }
+        $account->setStatus(true);
+        $this->em->flush();
+        $this->addFlash('success', 'Le compte a été activé');
+        return $this->redirectToRoute('app_register_addaccount');
     }
 }
