@@ -67,7 +67,7 @@ final class RegisterController extends AbstractController
             $this->em->flush();
             $this->addFlash('success', 'Le compte a été activé avec succès.');
         }
-        // On redirige vers la méthode addaccount
+        // On redirige vers la méthode addaccount précédente
         return $this->redirectToRoute('app_register_addaccount');
     }
 }
