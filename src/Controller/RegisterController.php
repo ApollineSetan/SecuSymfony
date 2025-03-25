@@ -56,21 +56,18 @@ final class RegisterController extends AbstractController
         ]);
     }
 
-    #[Route('/activte/{id}', name: 'app_register_activate')]
+    #[Route('/activate/{id}', name: 'app_register_activate')]
     public function activate(int $id): Response{
         
         $account = $this->accountRepository->find($id);
 
-        // On vérifie si le compte est déjà activé
-        if($account->getStatus() === true){
-            $this->addFlash('info', 'Le compte est déjà activé.');
-            return $this->redirectToRoute('app_register_addaccount');
+        // Dans le cas où le status est false, l'initialiser à true
+        if(!$account->getStatus()){
+            $account->setStatus(true);
+            $this->em->flush();
+            $this->addFlash('success', 'Le compte a été activé avec succès.');
         }
-
-        // On modifie la valeur du status à true
-        $account->setStatus(true);
-        $this->em->flush();
-        $this->addFlash('success', 'Le compte a été activé avec succès.');
+        // On redirige vers la méthode addaccount
         return $this->redirectToRoute('app_register_addaccount');
     }
 }
