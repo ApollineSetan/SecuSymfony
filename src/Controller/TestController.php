@@ -25,5 +25,11 @@ class TestController extends AbstractController {
         $this->emailService->sendEmail("setan.apolline@gmail.com", "YOU'VE BEEN HACKED", "YOU'VE BEEN HACKED", $imageUrl, $template->getContent());
         return new Response ('Mail envoyé');
     }
+
+    #[Route('/', name:"app_home")]
+    public function home() :Response {
+        return new Response("Bienvenue");
+    }
+    
 }
 

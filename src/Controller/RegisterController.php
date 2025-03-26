@@ -12,13 +12,15 @@ use App\Form\RegisterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\UtilsService;
 
 final class RegisterController extends AbstractController
 {
     public function __construct(
         private readonly AccountRepository $accountRepository,
         private readonly EntityManagerInterface $em,
-        private readonly UserPasswordHasherInterface $hasher
+        private readonly UserPasswordHasherInterface $hasher,
+        private readonly UtilsService $utilsService
     ) {}
 
     #[Route('/register', name: 'app_register_addaccount')]
@@ -56,18 +58,22 @@ final class RegisterController extends AbstractController
         ]);
     }
 
-    #[Route('/activate/{id}', name: 'app_register_activate')]
-    public function activate(int $id): Response{
-        
-        $account = $this->accountRepository->find($id);
-
-        // Dans le cas où le status est false, l'initialiser à true
-        if(!$account->getStatus()){
-            $account->setStatus(true);
-            $this->em->flush();
-            $this->addFlash('success', 'Le compte a été activé avec succès.');
+    #[Route('/activate/{id}', name:'app_register_activate')]
+    public function activate(mixed $id) :Response {
+        try {
+            $id = $this->utilsService->decodeBase64($id);
+            if(is_numeric($id)) {
+                $account = $this->accountRepository->find($id);
+                if(!$account->isStatus()) {
+                    $account->setStatus(true);
+                    $this->em->persist($account);
+                    $this->em->flush();
+                }
+            }
+        } catch (\Exception $e) {
+            $this->addFlash("warning", $e->getMessage());
         }
-        // On redirige vers la méthode addaccount
+        //Redirection vers la page Accueil
         return $this->redirectToRoute('app_register_addaccount');
     }
 }
